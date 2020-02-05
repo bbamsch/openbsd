@@ -959,6 +959,12 @@ pmap_init(void)
 }
 
 void
+pmap_postinit(void)
+{
+	// XXX TODO pmap_postinit
+}
+
+void
 pmap_update(pmap_t pm)
 {
 	// XXX Optional Function
