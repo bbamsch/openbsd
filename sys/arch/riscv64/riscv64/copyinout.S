@@ -149,16 +149,82 @@ copyin_end:
 END(copyin)
 
 /*
+ * Fault handler for the copy{in,out}str functions below.
+ */
+ENTRY(copyiostr_fault)
+	EXIT_USER_ACCESS(a7)
+	SET_FAULT_HANDLER(x0, a7) /* Clear the handler */
+	li	a0, EFAULT
+	j	copyiostr_cleanup
+copyiostr_success:
+	mv	a0, x0		/* return 0 */
+copyiostr_cleanup:
+
+	SET_FAULT_HANDLER(x0, a1) /* Clear the handler */
+	EXIT_USER_ACCESS(a1)
+3:	beqz	a3, 4f		/* Check if lencopied != NULL */
+	sd	a5, 0(a3)	/* lencopied = count */
+	li	a0, EFAULT
+	RETGUARD_CHECK(copystrio, t6)
+	ret
+END(copyiostr_fault)
+
+/*
+ * Copies a string from a kernel to user address
+ *
+ * int copyoutstr(const void *kaddr, void *uaddr, size_t maxlen, size_t * lencopied)
+ */
+ENTRY(copyoutstr)
+	RETGUARD_SETUP(copyiostr, t6)
+	li	a4, -1		/* Init copy scratch */
+	mv	a5, x0		/* count = 0 */
+	beqz	a2, 3f		/* If maxlen == 0 then skip loop */
+
+	// XXX Share common code with copyinstr?
+	la	a6, copyiostr_fault /* Get the handler address */
+	SET_FAULT_HANDLER(a6, a7) /* Set the handler */
+	ENTER_USER_ACCESS(a7)
+
+	li	a7, VM_MAXUSER_ADDRESS
+1:	bgt	a1, a7, copyiostr_fault
+	lb	a4, 0(a0)	/* Load from source */
+	addi	a0, a0, 1
+	sb	a4, 0(a1)	/* Store in dest */
+	addi	a1, a1, 1
+	addi	a2, a2, -1	/* len-- */
+	addi	a5, a5, 1	/* count++ */
+	beqz	a4, 2f
+	bnez	a2, 1b
+
+2:	EXIT_USER_ACCESS(a7)
+	SET_FAULT_HANDLER(x0, a7) /* Clear the handler */
+
+3:	beqz	a3, 4f		/* Check if lencopied != NULL */
+	sd	a5, 0(a3)	/* lencopied = count */
+
+4:	mv	a0, x0		/* return 0 */
+	beqz	a4, 5f
+	li	a0, ENAMETOOLONG
+
+
+	mv	a0, x0		/* return 0 */
+	RETGUARD_CHECK(copyiostr, t6)
+	ret
+END(copyoutstr)
+
+/*
  * Copies a string from a user to kernel address
  *
- * int copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
+ * int copyinstr(const void *udaddr, void *kaddr, size_t maxlen, size_t *lencopied)
  */
 ENTRY(copyinstr)
-	RETGUARD_SETUP(copyinstr, t6)
+	RETGUARD_SETUP(copyiostr, t6)
+	li	a4, -1		/* Init copy scratch */
 	mv	a5, x0		/* count = 0 */
-	beqz	a2, 3f		/* If len == 0 then skip loop */
+	beqz	a2, 3f		/* If maxlen == 0 then skip loop */
 
-	la	a6, copyio_fault /* Get the handler address */
+	// XXX Share common code with copyoutstr?
+	la	a6, copyiostr_fault /* Get the handler address */
 	SET_FAULT_HANDLER(a6, a7) /* Set the handler */
 	ENTER_USER_ACCESS(a7)
 
@@ -184,6 +250,6 @@ ENTRY(copyinstr)
 	beqz	a4, 5f
 	li	a0, ENAMETOOLONG
 
-5:	RETGUARD_CHECK(copyinstr, t6)
+5:	RETGUARD_CHECK(copyiostr, t6)
 	ret
 END(copyinstr)
