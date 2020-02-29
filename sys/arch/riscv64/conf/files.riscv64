@@ -3,15 +3,16 @@ maxpartitions 16
 maxusers 2 8 64
 
 # Major number for block devices, for ``root on'' lines
+# XXX These do not align with arm64. Consider checking correctness.
 #major	{ sd = 0 }
 #major	{ cd = 3 }
-#major	{ wd = 4 }
+major	{ wd = 4 }
 #major	{ rd = 8 }
 
 file	dev/cninit.c
 
 file	arch/riscv64/riscv64/autoconf.c
-file	arch/riscv64/riscv64/bus_space.c
+#file	arch/riscv64/riscv64/bus_space.c
 file	arch/riscv64/riscv64/clock.c
 file	arch/riscv64/riscv64/conf.c
 file	arch/riscv64/riscv64/disksubr.c		disk
@@ -32,6 +33,9 @@ file	arch/riscv64/riscv64/support.S
 file	arch/riscv64/riscv64/pagezero.S
 file	arch/riscv64/riscv64/trap.c
 
+file	arch/riscv64/dev/riscv64_bus_space.c
+file	arch/riscv64/dev/pci_machdep.c
+
 file	arch/riscv64/riscv64/db_disasm.c	ddb
 file	arch/riscv64/riscv64/db_interface.c	ddb
 file	arch/riscv64/riscv64/db_trace.c	ddb
@@ -42,6 +46,13 @@ define	mainbus {}
 device	mainbus: fdt
 attach	mainbus at root
 file	arch/riscv64/dev/mainbus.c			mainbus
+
+# Machine-independent SCSI drivers
+# include "scsi/files.scsi"
+# include "dev/atapiscsi/files.atapiscsi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
@@ -72,8 +83,20 @@ include "dev/usb/files.usb"
 
 # FDT support
 include "dev/ofw/files.ofw"
+
+# MII and PCI
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+include "dev/sdmmc/files.sdmmc"
+
 # Machine-independent FDT drivers
 include "dev/fdt/files.fdt"
+
+# ACPI
+include "dev/acpi/files.acpi"
+
+attach	acpi at fdt with acpi_fdt
+file	arch/riscv64/riscv64/acpi_machdep.c	acpi_fdt
 
 # XXX ofwbus
 # XXX timer
