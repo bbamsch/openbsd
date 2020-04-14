@@ -22,3 +22,6 @@
     * Look into implementing riscv64/cpufunc.c, if necessary
 * Program Load
     * Revisit program entrypoint initialization (is it sane?)
+* libc
+    * lib/csu needs to be compiled to link libc into hello world test
+    * lib/csu MD code needs to revisited -- probably won't work as is
