@@ -35,8 +35,9 @@
 #define SYSTRAP(x)					\
 	li	t0, SYS_ ## x				;\
 	ecall						;\
-	/* XXX any other sync barriers? */		;\
-	sfence.i
+	/* XXX d sync barrier? */			;\
+	fence.i						;\
+	fence r,r;
 
 #define DL_SYSCALL(n)					\
 	.global		__CONCAT(_dl_,n)		;\
