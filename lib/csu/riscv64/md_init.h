@@ -34,7 +34,7 @@
 #define MD_SECT_CALL_FUNC(section, func) \
 	__asm (".section "#section", \"ax\"	\n" \
 	"	la	t0, " #func ";		\n" \
-	"	jalr	t0			\n" \
+	"	jalr	t0;			\n" \
 	"	.previous")
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)	\
@@ -44,8 +44,8 @@
 	"	.type " #entry_pt ",%function	\n" \
 	"	.align 4			\n" \
 	#entry_pt":				\n" \
-	"	addi	sp, sp, -16		\n" \
-	"	sd	ra, (sp)		\n" \
+	"	addi	sp, sp, -16;		\n" \
+	"	sd	ra, (sp);		\n" \
 	"	/* fall thru */			\n" \
 	"	.previous")
 
@@ -53,9 +53,9 @@
 #define MD_SECTION_EPILOGUE(sect)		\
 	__asm (					\
 	".section "#sect",\"ax\",@progbits	\n" \
-	"	ld	ra, 0(sp)		\n" \
-	"	addi	sp, sp, 16		\n" \
-	"	ret				\n" \
+	"	ld	ra, 0(sp);		\n" \
+	"	addi	sp, sp, 16;		\n" \
+	"	ret;				\n" \
 	"	.previous")
 
 
@@ -67,18 +67,18 @@
 	"	.globl	__start			\n" \
 	"_start:				\n" \
 	"__start:				\n" \
-	"	mv	a3, a2	/* cleanup */	\n" \
+	"	mv	a3, a2;	/* cleanup */	\n" \
 	"/* Get argc/argv/envp from stack */	\n" \
-	"	addi	a1, a0, 8		\n" \
-	"	ld	a0, 0(a0)		\n" \
-	"	slli	t0, a0, 3		\n" \
-	"	add	a2, a1, t0		\n" \
-	"	addi	a2, a2, 8		\n" \
+	"	addi	a1, a0, 8;		\n" \
+	"	ld	a0, 0(a0);		\n" \
+	"	slli	t0, a0, 3;		\n" \
+	"	add	a2, a1, t0;		\n" \
+	"	addi	a2, a2, 8;		\n" \
 	"	.option push			\n" \
 	"	.option norelax			\n" \
-	"	lla	gp, __global_pointer$	\n" \
+	"	lla	gp, __global_pointer$;	\n" \
 	"	.option pop			\n" \
-	"	call	___start		\n" \
+	"	call	___start;		\n" \
 	".previous");
 
 #define	MD_RCRT0_START				\
